@@ -1,0 +1,130 @@
+---
+title: "Glassdoor’s Top Jobs in 2016"
+author: "Hunter Ratliff"
+date: "January 20, 2016"
+output: 
+  html_document:
+    theme: united
+---
+```{r, include=FALSE}
+require(knitr)
+## Define global settings for chunk output
+knitr::opts_chunk$set(fig.width=7, fig.height=7, fig.align='center',      
+                      fig.path='Figures/',                             # Sets output for figures
+                      warning=FALSE, message=FALSE, collapse=TRUE)        # Silences most chunk outputs
+
+## The 'source' function runs the R script of the provided path 
+# See code:         https://github.com/HunterRatliff1/Citations
+source("~/Github/Citations/Citation Function.R")
+rm(citation.htr, citation.date)
+```
+
+First, let's load the data that I pulled from 
+[Glassdoor's original post](https://www.glassdoor.com/Best-Jobs-in-America-LST_KQ0,20.htm). 
+For the sake of convenience, I've saved this data into a 
+[publically accessable Googlesheet](https://docs.google.com/spreadsheets/d/1dqzAFKp_ANGmyGTL_M3KJRN080Reg76RN61MOjsai0g/edit?usp=sharing), 
+from which I could import directly into RStudio with the help of the `googlesheets`
+package (available on [CRAN](https://cran.r-project.org/web/packages/googlesheets/index.html)). 
+
+
+```{r}
+require(googlesheets) # Used to access my Googlesheets
+require(dplyr)        # Used for data transformation
+
+df <- gs_title("Glassdoor_Top_Jobs") %>% 
+  gs_read_csv("2016") 
+```
+
+From here, I used [Hadley Wickham](http://had.co.nz/)'s `ggplot2` package 
+(plus a few add-ons, namly `ggthemes`, `RColorBrewer`, and `ggrepel`) to 
+plot a scatterplot of the data.
+
+```{r, echo=TRUE, collapse=TRUE}
+require(ggplot2)      # Hadley's package for graphics
+require(ggrepel)      # Used for adding the labels
+require(ggthemes)     # Used to add the theme
+require(RColorBrewer) # Used for color/fill scales
+
+
+df %>% ggplot(aes(x=Career_Opportunity, y=Job_Score)) + 
+  ## Geoms
+  # add the points, scaling their size by their ranking & coloring by salary
+  geom_point(aes(size=25-Rank, color=Median_Base_Salary/1000 ), alpha=0.5) +
+  # label the points, filling by ranking and coloring by salary
+  geom_label_repel(aes(label=Job, fill=Rank, color=Median_Base_Salary/1000), size=2) + 
+  
+  ## Add scales & labels 
+  # scales
+  scale_fill_distiller(name="Label Fill:\nRanking", type = "div", palette = 4) +
+  scale_color_distiller(name="Median Base Salary\n(x$1,000)", type = "div", palette = 8) +
+  # labels
+  guides(size=F) + labs(x="Career Oppurtunity", y="Job Score",
+                        title="Glassdoor's Top 25 Jobs in 2016") +
+  
+  ## Custom Theme: The Five Thirty Eight theme + UT Colors & Fonts
+  theme_fivethirtyeight() + theme(
+    # legends
+    legend.position   = "right", legend.direction  = "vertical",
+    legend.background = element_rect(fill = "transparent"),
+    # titles
+    title             = element_text(color="#BF5700", family = "Georgia"),
+    axis.title        = element_text(face = "bold"),
+    axis.text         = element_text(color="#333F48", family = "Tahoma"))
+```
+
+
+
+```{r}
+# Make the table look pretty
+require(scales)   
+df$Job_Openings       <- comma(df$Job_Openings)
+df$Median_Base_Salary <- dollar(df$Median_Base_Salary)
+
+# Print table to .rmd file
+knitr::kable(arrange(df, Rank))
+```
+
+
+<br><br><br>
+
+***
+# Contact
+
+**Hunter Ratliff**
+
+Email: hunterratliff1@gmail.com   
+Twitter: @[HunterRatliff1](https://twitter.com/HunterRatliff1)   
+Github: [HunterRatliff1](https://github.com/hunterratliff1)   
+RPubs: [HunterRatliff1](rpubs.com/HunterRatliff1)   
+
+
+
+
+```
+Copyright (C) 2016 Hunter Ratliff
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+```
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+---
+
+Information About the R Session at the time it was compiled (for the purposes of [Reproducible Research](https://cran.r-project.org/web/views/ReproducibleResearch.html))
+
+```{r Session_info, echo=TRUE, collapse=TRUE}
+devtools::session_info()
+```
